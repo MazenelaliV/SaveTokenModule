@@ -11,38 +11,64 @@ public class Saving_shared_tokenModule: Module {
     Name("Saving_shared_token")
 
     // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants([
-      "PI": Double.pi
-    ])
+    Function("saveToken") { (token: String) in
+      let service = "com.wwork.orbitnowapp"
+      let account = "userToken"
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+      let tokenData = token.data(using: .utf8)!
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      return "Hello world! 👋"
+      let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+        kSecValueData as String: tokenData,
+      ]
+
+      SecItemDelete(query as CFDictionary)
+      let status = SecItemAdd(query as CFDictionary, nil)
+
+      if status != errSecSuccess {
+        print("Keychain save failed with status: \(status)")
+      }
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { (value: String) in
-      // Send an event to JavaScript.
-      self.sendEvent("onChange", [
-        "value": value
-      ])
-    }
+    Function("getToken") { () -> String? in
+      let service = "com.wwork.orbitnowapp"
+      let account = "userToken"
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of the
-    // view definition: Prop, Events.
-    View(Saving_shared_tokenView.self) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { (view: Saving_shared_tokenView, url: URL) in
-        if view.webView.url != url {
-          view.webView.load(URLRequest(url: url))
-        }
+      let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+        kSecReturnData as String: kCFBooleanTrue!,
+        kSecMatchLimit as String: kSecMatchLimitOne,
+      ]
+
+      var item: CFTypeRef?
+      let status = SecItemCopyMatching(query as CFDictionary, &item)
+
+      if status == errSecSuccess, let data = item as? Data {
+        return String(data: data, encoding: .utf8)
+      } else {
+        return nil
       }
 
-      Events("onLoad")
+    }
+    Function("clearToken") {
+      let service = "com.wwork.orbitnowapp"
+      let account = "userToken"
+
+      let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+      ]
+
+      let status = SecItemDelete(query as CFDictionary)
+
+      if status != errSecSuccess && status != errSecItemNotFound {
+        print("Keychain delete failed with status: \(status)")
+      }
     }
   }
 }
