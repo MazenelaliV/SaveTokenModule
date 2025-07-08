@@ -23,7 +23,7 @@ export default function App() {
             title="Set Token"
             onPress={async () => {
               console.log('start')
-              await saveToken("my-secret-token-mazne1111");
+              await saveToken("my-secret-token-mazne1123232311");
               console.log("Token saved!");
             }}
           />
