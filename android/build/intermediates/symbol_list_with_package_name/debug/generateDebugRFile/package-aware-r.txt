@@ -1,3 +1,2 @@
 expo.modules.savingsharedtoken
-xml account_preferences
 xml authenticator
