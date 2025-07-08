@@ -1,2 +1,1 @@
-int xml account_preferences 0x0
 int xml authenticator 0x0
